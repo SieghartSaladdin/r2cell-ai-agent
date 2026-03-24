@@ -3,22 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DocuMind — AI Berbasis Dokumen</title>
+  <title>R2Cell — AI Assistant</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --ink: #0e0e0e;
-      --paper: #f5f0e8;
-      --cream: #ede7d9;
-      --accent: #c8402a;
-      --accent2: #2a5fc8;
-      --muted: #7a6f62;
-      --border: #d4cabb;
-      --chat-user-bg: #0e0e0e;
+      --ink: #0f172a;
+      --paper: #f8f9fa;
+      --cream: #f1f5f9;
+      --accent: #2563eb;
+      --accent2: #f59e0b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --chat-user-bg: #0f172a;
       --chat-ai-bg: #ffffff;
-      --shadow: 0 2px 24px rgba(14,14,14,0.08);
+      --shadow: 0 4px 20px rgba(15,23,42,0.05);
     }
 
     html, body {
@@ -56,7 +56,7 @@
       position: absolute;
       top: 0; right: 0; bottom: 0;
       width: 1px;
-      background: linear-gradient(to bottom, transparent, rgba(200,64,42,0.6) 30%, rgba(200,64,42,0.6) 70%, transparent);
+      background: linear-gradient(to bottom, transparent, rgba(37,99,235,0.6) 30%, rgba(37,99,235,0.6) 70%, transparent);
     }
 
     .sidebar-header {
@@ -191,8 +191,107 @@
     }
 
     .doc-icon { font-size: 16px; flex-shrink: 0; }
-    .doc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+    .doc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; cursor: pointer; transition: color 0.2s; }
+    .doc-name:hover { color: var(--accent); }
     .doc-status { font-size: 10px; color: #4caf50; flex-shrink: 0; }
+    .doc-delete-btn {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.4);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 4px;
+      flex-shrink: 0;
+      transition: color 0.2s;
+    }
+    .doc-delete-btn:hover { color: var(--accent); }
+
+    /* Modal Preview */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(14,14,14,0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .modal {
+      background: var(--paper);
+      width: 90%;
+      max-width: 900px;
+      height: 85vh;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: translateY(20px);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .modal-overlay.active .modal {
+      transform: translateY(0);
+    }
+    .modal-header {
+      padding: 16px 24px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color 0.2s;
+      padding: 4px;
+      line-height: 1;
+    }
+    .modal-close:hover { color: var(--accent); }
+    .modal-body {
+      flex: 1;
+      background: #fff;
+      position: relative;
+    }
+    .modal-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .modal-pre {
+      padding: 24px;
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--ink);
+      background: #fff;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
 
     /* Session */
     .session-section {
@@ -224,7 +323,7 @@
     }
 
     .session-input:focus {
-      border-color: rgba(200,64,42,0.6);
+      border-color: rgba(37,99,235,0.6);
     }
 
     /* ── Main Chat Area ── */
@@ -563,8 +662,8 @@
   <!-- ── Sidebar ── -->
   <aside class="sidebar">
     <div class="sidebar-header">
-      <div class="logo">Docu<span>Mind</span></div>
-      <div class="logo-sub">RAG · AI · Dokumen</div>
+      <div class="logo">R2<span>Cell</span></div>
+      <div class="logo-sub">GADGET & SMARTPHONE STORE</div>
     </div>
 
     <div class="upload-section">
@@ -601,7 +700,7 @@
   <main class="chat-area">
     <div class="chat-topbar">
       <div class="chat-title">
-        Tanya Dokumenmu
+        Tanya Stok & Harga
         <em>Powered by LangChain + RAG</em>
       </div>
       <div class="status-dot">
@@ -612,13 +711,13 @@
 
     <div class="messages" id="messages">
       <div class="welcome" id="welcome">
-        <span class="welcome-icon">🧠</span>
-        <h2>Halo, ada yang bisa dibantu?</h2>
-        <p>Unggah dokumen PDF atau TXT di sidebar, lalu tanyakan apa saja tentang isinya.</p>
+        <span class="welcome-icon">📱</span>
+        <h2>Selamat datang di R2Cell</h2>
+        <p>Saya asisten AI R2Cell. Tanyakan harga iPhone, rekomendasi HP, atau unggah katalog Anda.</p>
         <div class="welcome-hint">
-          <div class="hint-chip" onclick="fillHint(this)">Ringkaskan dokumen yang telah diunggah</div>
-          <div class="hint-chip" onclick="fillHint(this)">Apa poin utama dari dokumen ini?</div>
-          <div class="hint-chip" onclick="fillHint(this)">Jelaskan bagian penting dari file ini</div>
+          <div class="hint-chip" onclick="fillHint(this)">Berapa harga iPhone 15 Pro Max?</div>
+          <div class="hint-chip" onclick="fillHint(this)">Ada rekomendasi HP harga 5 jutaan?</div>
+          <div class="hint-chip" onclick="fillHint(this)">Tolong ringkas dokumen katalog ini.</div>
         </div>
       </div>
     </div>
@@ -639,6 +738,19 @@
     </div>
   </main>
 
+</div>
+
+<!-- Modal Preview -->
+<div class="modal-overlay" id="previewModal" onclick="closePreview(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="previewTitle">Document Preview</div>
+      <button class="modal-close" onclick="closePreview()">×</button>
+    </div>
+    <div class="modal-body" id="previewBody">
+      <!-- Iframe or Pre will be inserted here -->
+    </div>
+  </div>
 </div>
 
 <script>
@@ -732,15 +844,115 @@
     const label = document.getElementById('docsLabel');
     label.style.display = 'block';
 
+    if (document.getElementById('doc-' + name)) return;
+
     const item = document.createElement('div');
     item.className = 'doc-item';
+    item.id = 'doc-' + name;
     item.innerHTML = `
       <span class="doc-icon">${name.endsWith('.pdf') ? '📕' : '📝'}</span>
-      <span class="doc-name" title="${name}">${name}</span>
-      <span class="doc-status">✓</span>
+      <span class="doc-name" title="${name}" onclick="previewDoc('${name}')">${name}</span>
+      <button class="doc-delete-btn" onclick="deleteDoc('${name}')" title="Hapus Dokumen">✕</button>
     `;
     list.appendChild(item);
   }
+
+  async function fetchDocuments() {
+    try {
+      const res = await fetch(`${API}/documents`);
+      const data = await res.json();
+      if (res.ok && data.documents) {
+        data.documents.forEach(doc => addDocItem(doc));
+      }
+    } catch (e) {
+      console.error('Failed to fetch documents', e);
+    }
+  }
+
+  async function deleteDoc(name) {
+    if (!confirm('Apakah Anda yakin ingin menghapus dokumen ini dan semua embed data darinya?')) return;
+    
+    const item = document.getElementById('doc-' + name);
+    if (item) {
+      item.style.opacity = '0.5';
+      const btn = item.querySelector('.doc-delete-btn');
+      if (btn) btn.disabled = true;
+    }
+
+    try {
+      const res = await fetch(`${API}/documents/${name}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok) {
+        if (item) item.remove();
+        showToast('✓ ' + data.message, 'success');
+        
+        const list = document.getElementById('docsList');
+        if (list.children.length === 0) {
+          document.getElementById('docsLabel').style.display = 'none';
+        }
+      } else {
+        if (item) {
+          item.style.opacity = '1';
+          const btn = item.querySelector('.doc-delete-btn');
+          if (btn) btn.disabled = false;
+        }
+        showToast('✗ ' + (data.detail || 'Gagal menghapus dokumen'), 'error');
+      }
+    } catch (e) {
+      if (item) {
+        item.style.opacity = '1';
+        const btn = item.querySelector('.doc-delete-btn');
+        if (btn) btn.disabled = false;
+      }
+      showToast('✗ Tidak dapat terhubung ke server', 'error');
+    }
+  }
+
+  async function previewDoc(name) {
+    const modal = document.getElementById('previewModal');
+    const title = document.getElementById('previewTitle');
+    const body = document.getElementById('previewBody');
+    
+    title.textContent = name;
+    body.innerHTML = ''; // Clear previous preview
+    
+    // For PDF, use an iframe to leverage browser native PDF viewer
+    if (name.endsWith('.pdf')) {
+      body.innerHTML = `<iframe class="modal-iframe" src="${API}/documents/${name}"></iframe>`;
+    } else {
+      // For TXT (or unknown), fetch the text and shove it in a pre tag
+      body.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--muted); font-family: 'DM Mono', monospace;">Memuat dokumen...</div>`;
+      try {
+        const res = await fetch(`${API}/documents/${name}`);
+        if (!res.ok) throw new Error('File tidak ditemukan');
+        const text = await res.text();
+        const pre = document.createElement('pre');
+        pre.className = 'modal-pre';
+        pre.textContent = text;
+        body.innerHTML = '';
+        body.appendChild(pre);
+      } catch (err) {
+        body.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--accent); font-family: 'DM Mono', monospace;">Gagal memuat dokumen: ${err.message}</div>`;
+      }
+    }
+    
+    modal.classList.add('active');
+  }
+  
+  function closePreview(e) {
+    // If e is passed, ensure it is the overlay that got clicked, not inside the modal body
+    if (e && e.target !== document.getElementById('previewModal')) return;
+    
+    const modal = document.getElementById('previewModal');
+    modal.classList.remove('active');
+    
+    // Optional: clear iframe to stop memory leaks
+    setTimeout(() => {
+      document.getElementById('previewBody').innerHTML = '';
+    }, 300);
+  }
+
+  document.addEventListener('DOMContentLoaded', fetchDocuments);
 
   // ── Chat ──
   function handleKey(e) {
@@ -793,7 +1005,15 @@
       removeThinking(thinkingId);
 
       if (res.ok) {
-        appendMessage('ai', data.response);
+        if (data.interrupt) {
+          // Render the "please wait" message first if the AI generated one
+          if (data.pending_message) {
+            appendMessage('ai', data.pending_message);
+          }
+          appendInterrupt(data.interrupt_value, sessionId);
+        } else {
+          appendMessage('ai', data.response);
+        }
       } else {
         appendMessage('ai', '⚠️ ' + (data.detail || 'Terjadi kesalahan pada server.'));
       }
@@ -806,13 +1026,67 @@
     }
   }
 
+  function appendInterrupt(interrupt, sessionId) {
+    const messages = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'message ai';
+    div.innerHTML = `
+      <div class="avatar">🤖</div>
+      <div class="bubble" style="border: 2px solid var(--accent);">
+        <p><strong>[ADMIN APPROVAL REQUIRED]</strong></p>
+        <p style="margin: 10px 0;">${interrupt.question}</p>
+        <div style="margin-top:12px; display:flex; gap:10px;">
+          <input type="text" id="adminReplyInput" placeholder="Tulis keputusan/diskon..." style="flex:1; padding:8px 12px; border-radius:6px; border:1px solid var(--border); font-family: 'DM Sans', sans-serif;">
+          <button onclick="resumeChat('${sessionId}', this)" style="padding:8px 16px; background:var(--ink); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Kirim ke AI</button>
+        </div>
+      </div>
+    `;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  async function resumeChat(sessionId, btn) {
+    const container = btn.parentElement;
+    const inputField = container.querySelector('#adminReplyInput');
+    const adminReply = inputField.value.trim();
+    
+    if (!adminReply) {
+      alert("Balasan admin tidak boleh kosong!");
+      return;
+    }
+
+    btn.disabled = true;
+    inputField.disabled = true;
+    btn.textContent = 'Processing...';
+
+    const thinkingId = appendThinking();
+
+    try {
+      const res = await fetch(`${API}/chat/resume`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, admin_reply: adminReply })
+      });
+      const data = await res.json();
+      
+      removeThinking(thinkingId);
+      if (res.ok) {
+        appendMessage('ai', data.response);
+        container.parentElement.parentElement.remove(); // Hapus bubble interrupt
+      }
+    } catch (e) {
+      removeThinking(thinkingId);
+      showToast('Gagal memproses persetujuan', 'error');
+    }
+  }
+
   function appendMessage(role, text) {
     const container = document.getElementById('messages');
     const div = document.createElement('div');
     div.className = `message ${role}`;
 
     const now = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-    const avatarContent = role === 'user' ? 'KM' : '🧠';
+    const avatarContent = role === 'user' ? 'KM' : '🤖';
 
     div.innerHTML = `
       <div class="avatar">${avatarContent}</div>
@@ -834,7 +1108,7 @@
     div.className = 'message ai thinking';
     div.id = id;
     div.innerHTML = `
-      <div class="avatar">🧠</div>
+      <div class="avatar">🤖</div>
       <div class="bubble">
         <div class="thinking-dot"></div>
         <div class="thinking-dot"></div>
